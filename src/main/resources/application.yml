@@ -1,0 +1,22 @@
+server:
+  port: 8083
+# Spring配置
+spring:
+  main:
+    allow-circular-references: true
+  # 文件上传
+  servlet:
+    multipart:
+      # 单个文件大小
+      max-file-size: 1024MB
+      # 设置总上传的文件大小
+      max-request-size: 2048MB
+# 日志配置
+logging:
+  level:
+    top.zlhy7: debug
+    org.springframework: warn
+# 监控的目录
+monitoredPath: D:/fileWatch/
+# 解密后目录
+monitoredDecryptPath: D:/fileWatch_解密/
