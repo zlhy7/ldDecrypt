@@ -131,8 +131,11 @@ public class MonitoredFileService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        // 移动文件到解密目录,覆盖已存在
-        Path path = Files.move(Paths.get(file1.getAbsolutePath()), Paths.get(monitoredDecryptPath,file1.getName()), StandardCopyOption.REPLACE_EXISTING);
+        File decryptFile = new File(monitoredDecryptPath + path2);
+        if (!decryptFile.getParentFile().exists()) {
+            decryptFile.getParentFile().mkdirs();
+        }
+        Path path = Files.move(Paths.get(file1.getAbsolutePath()), Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
         log.info("移动文件到解密目录：{}",path);
         log.info("转化完毕");
     }
