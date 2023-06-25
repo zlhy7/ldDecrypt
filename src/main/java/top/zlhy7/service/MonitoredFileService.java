@@ -131,6 +131,8 @@ public class MonitoredFileService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        String path2 = file.getAbsolutePath().replaceAll("\\|//","/")
+                .replace(monitoredFilePath,"");
         File decryptFile = new File(monitoredDecryptPath + path2);
         if (!decryptFile.getParentFile().exists()) {
             decryptFile.getParentFile().mkdirs();
