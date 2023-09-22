@@ -58,7 +58,7 @@ public class FileListener extends FileAlterationListenerAdaptor {
         try {
             monitoredFileService.decrypt(file);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
         }
     }
 

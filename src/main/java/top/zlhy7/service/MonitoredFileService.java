@@ -1,27 +1,19 @@
 package top.zlhy7.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
-import top.zlhy7.controller.LdDecryptController;
 import top.zlhy7.listener.FileListener;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -102,35 +94,15 @@ public class MonitoredFileService {
             log.error("异常处理 {}",e.getMessage());
         }
     }
-    public static MultipartFile getMultipartFile(File file) {
-        FileItem item = new DiskFileItemFactory().createItem("file",
-                MediaType.MULTIPART_FORM_DATA_VALUE, true, file.getName());
-        try (InputStream is = new FileInputStream(file);
-             OutputStream os = item.getOutputStream()) {
-            // 流转移
-            IOUtils.copy(is, os);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid file: " + e, e);
-        }
-        return new CommonsMultipartFile(item);
-    }
 
     /**
      * 解密
      * @param file
+     *
      */
     public void decrypt(File file) throws Exception {
-        log.info("开始解密：{}",file.getAbsolutePath());
-        MultipartFile multipartFile = getMultipartFile(file);
-        System.out.println(multipartFile.getSize());
-        LdDecryptController ldDecryptController = new LdDecryptController();
-        File file1 = null;
-        try {
-            file1 = ldDecryptController.batchTransferTo(new MultipartFile[]{multipartFile});
-            log.info("解密完毕：{}",file1.getAbsolutePath());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        System.out.printf("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
+        //region 解密目标地址
         String path2 = file.getAbsolutePath().replace("\\","/")
                 .replace("//","/")
                 .replace(monitoredFilePath,"");
@@ -138,8 +110,68 @@ public class MonitoredFileService {
         if (!decryptFile.getParentFile().exists()) {
             decryptFile.getParentFile().mkdirs();
         }
-        Path path = Files.move(Paths.get(file1.getAbsolutePath()), Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-        log.info("移动文件到解密目录：{}",path);
-        log.info("转化完毕");
+        //endregion
+        try (InputStream fis = new FileInputStream(file)){
+            Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+                System.out.printf("解密完毕：%s\n",decryptFile.getAbsolutePath());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        decrypt(file,monitoredFilePath,monitoredDecryptPath);
+    }
+    /**
+     * 手动指定解密目录
+     * @param monitoredFilePath 监控目录
+     * @param monitoredDecryptPath 解密文件生成目录
+     * @return
+     * @author renyong on 2023/9/22 12:10
+     */
+    public void decrypt(String monitoredFilePath,String monitoredDecryptPath) throws Exception {
+        // 手动解密
+        MonitoredFileService monitoredFileService = new MonitoredFileService();
+        monitoredFileService.monitoredFilePath = "E:/download/";
+        monitoredFileService.monitoredDecryptPath = "E:/fileWatch_解密/";
+        Files.walk(Paths.get(monitoredFilePath))
+                .map(Path::toFile)
+                .filter(file -> !file.isDirectory())
+                .forEach(file -> {
+                    try {
+                        monitoredFileService.decrypt(file,monitoredFilePath,monitoredDecryptPath);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+    /**
+     * 手动指定解密目录
+     * @param file 文件目录
+     * @param monitoredFilePath 监控目录
+     * @param monitoredDecryptPath 解密文件生成目录
+     * @return
+     * @author renyong on 2023/9/22 12:10
+     */
+    public void decrypt(File file,String monitoredFilePath,String monitoredDecryptPath){
+        System.out.printf("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
+        //region 解密目标地址
+        String path2 = file.getAbsolutePath().replace("\\","/")
+                .replace("//","/")
+                .replace(monitoredFilePath,"");
+        File decryptFile = new File(monitoredDecryptPath + path2);
+        if (!decryptFile.getParentFile().exists()) {
+            decryptFile.getParentFile().mkdirs();
+        }
+        //endregion
+        try (InputStream fis = new FileInputStream(file)){
+            Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+            System.out.printf("解密完毕：%s\n",decryptFile.getAbsolutePath());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        // 手动解密
+        MonitoredFileService monitoredFileService = new MonitoredFileService();
+        // 注意文件夹末尾必须带“/”
+        monitoredFileService.decrypt("E:/deskTop/日常工作添加/需求文档/","E:/fileWatch_解密/");
     }
 }
