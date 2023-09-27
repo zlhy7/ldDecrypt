@@ -9,6 +9,7 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.zlhy7.listener.FileListener;
+import top.zlhy7.model.DecryptWebSocketBody;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -19,6 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
+
+import static top.zlhy7.constant.Constants.FILE_SEPARATOR;
 
 /**
  * @author shafulin
@@ -47,7 +50,6 @@ public class MonitoredFileService {
      * 解密文件目录 file对象
      */
     public static File monitoredDecryptPathObj;
-
     @PostConstruct
     public void init(){
         log.info("绿盾文件解密监控目录：{}",monitoredFilePath);
@@ -103,8 +105,8 @@ public class MonitoredFileService {
     public void decrypt(File file) throws Exception {
         System.out.printf("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
         //region 解密目标地址
-        String path2 = file.getAbsolutePath().replace("\\","/")
-                .replace("//","/")
+        String path2 = file.getAbsolutePath().replace("\\",FILE_SEPARATOR)
+                .replace("//",FILE_SEPARATOR)
                 .replace(monitoredFilePath,"");
         File decryptFile = new File(monitoredDecryptPath + path2);
         if (!decryptFile.getParentFile().exists()) {
@@ -124,7 +126,7 @@ public class MonitoredFileService {
      * @param monitoredFilePath 监控目录
      * @param monitoredDecryptPath 解密文件生成目录
      * @return
-     * @author renyong on 2023/9/22 12:10
+     * @author 沙福林 on 2023/9/22 12:10
      */
     public void decrypt(String monitoredFilePath,String monitoredDecryptPath) throws Exception {
         // 手动解密
@@ -148,13 +150,13 @@ public class MonitoredFileService {
      * @param monitoredFilePath 监控目录
      * @param monitoredDecryptPath 解密文件生成目录
      * @return
-     * @author renyong on 2023/9/22 12:10
+     * @author 沙福林 on 2023/9/22 12:10
      */
     public void decrypt(File file,String monitoredFilePath,String monitoredDecryptPath){
         System.out.printf("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
         //region 解密目标地址
-        String path2 = file.getAbsolutePath().replace("\\","/")
-                .replace("//","/")
+        String path2 = file.getAbsolutePath().replace("\\",FILE_SEPARATOR)
+                .replace("//",FILE_SEPARATOR)
                 .replace(monitoredFilePath,"");
         File decryptFile = new File(monitoredDecryptPath + path2);
         if (!decryptFile.getParentFile().exists()) {
@@ -167,6 +169,46 @@ public class MonitoredFileService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+    /**
+     * 网页指定解密目录
+     * @param decryptWebSocketBody websocket消息体
+     * @param webSocketService websocket服务
+     * @return
+     * @author 沙福林 on 2023-09-27 20:10:11
+     */
+    public void decrypt(DecryptWebSocketBody decryptWebSocketBody,WebSocketService webSocketService){
+        // 监控目录
+        String monitoredFilePath = decryptWebSocketBody.getMonitoredFilePath();
+        // 解密生成目录
+        String monitoredDecryptPath = decryptWebSocketBody.getMonitoredDecryptPath();
+        // 文件路径分隔符以及末尾符号处理
+        monitoredFilePath = monitoredFilePath.replaceAll("[\\/]+",FILE_SEPARATOR);
+        if(!monitoredFilePath.endsWith(FILE_SEPARATOR)){
+            monitoredFilePath += FILE_SEPARATOR;
+        }
+        monitoredDecryptPath = monitoredDecryptPath.replaceAll("\\+|/+",FILE_SEPARATOR);
+        if(!monitoredDecryptPath.endsWith(FILE_SEPARATOR)){
+            monitoredDecryptPath += FILE_SEPARATOR;
+        }
+        // 检查以上目录是否存在，不存在则创建，如果monitoredFilePath是文件地址，则解密目录一定是个目录地址
+/*
+        webSocketService.sendPathMsg("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
+        //region 解密目标地址
+        String path2 = file.getAbsolutePath().replace("\\",FILE_SEPARATOR)
+                .replace("//",FILE_SEPARATOR)
+                .replace(monitoredFilePath,"");
+        File decryptFile = new File(monitoredDecryptPath + path2);
+        if (!decryptFile.getParentFile().exists()) {
+            decryptFile.getParentFile().mkdirs();
+        }
+        //endregion
+        try (InputStream fis = new FileInputStream(file)){
+            Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+            System.out.printf("解密完毕：%s\n",decryptFile.getAbsolutePath());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }*/
     }
     public static void main(String[] args) throws Exception {
         // 手动解密

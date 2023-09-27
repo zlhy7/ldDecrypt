@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * @author renyong
+ * @author 沙福林
  * @date 2023/9/27 下午4:01
  * @description 页面控制器
  */
@@ -22,7 +22,6 @@ public class PageController {
      */
     @GetMapping
     public String indexPage(HttpServletRequest request){
-        System.out.println(request.getRequestURI());
         return "index";
     }
 }

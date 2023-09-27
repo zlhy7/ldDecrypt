@@ -2,7 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>绿盾解密</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.7.9/vue.min.js"></script>
+    <style>
+        #vueApp table *{
+            font-size: 50px;
+        }
+        /*#showLog{*/
+        /*    font-size: 30px;*/
+        /*}*/
+    </style>
 </head>
-<body>hello thymeleaf</body>
+<body>
+<div style="background-color: #777;color: white">页面比较简洁，主意在简单配置,适合小白</div>
+<div id="vueApp">
+    <table width="99%">
+        <tr>
+            <td align="right">解密目录：</td>
+            <td width="80%"><input type="text" name="monitoredPath" style="width: 100%"/></td>
+        </tr>
+        <tr>
+            <td align="right">生成目录：</td>
+            <td><input type="text" name="monitoredDecryptPath" style="width: 100%"/></td>
+        </tr>
+        <tr>
+            <td colspan="2" align="center">
+                <input type="button" value="解密" @click="decrypt" style="width: 100%"/>
+                <input type="button" value="清空日志内容" @click="clearLog" style="width: 100%"/>
+            </td>
+        </tr>
+    </table>
+    <label>日志展示：</label>
+    <div id="showLog" style="border: 1px black solid">
+        <p>这是日志</p>
+    </div>
+</div>
+</body>
 </html>
+<script>
+    var vueApp = new Vue({
+        el: '#vueApp',
+        data: {},
+        methods: {
+            // 解密
+            decrypt: function () {
+                alert(666)
+            },
+            // 清理日志
+            clearLog: function () {
+
+            }
+        }
+    });
+</script>

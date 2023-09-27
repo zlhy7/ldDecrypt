@@ -22,3 +22,12 @@ logging:
 monitoredPath: D:/fileWatch/
 # 解密后目录
 monitoredDecryptPath: D:/fileWatch_解密/
+# websocket配置
+concept:
+  websocket:
+    server:
+      default-endpoint:
+        path-selector:
+          enabled: true #启用Path选择器
+        user-selector:
+          enabled: true #启用用户选择器
