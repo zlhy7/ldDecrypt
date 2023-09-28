@@ -6,11 +6,8 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.7.9/vue.min.js"></script>
     <style>
         #vueApp table *{
-            font-size: 50px;
+            font-size: 40px;
         }
-        /*#showLog{*/
-        /*    font-size: 30px;*/
-        /*}*/
     </style>
 </head>
 <body>
@@ -19,11 +16,11 @@
     <table width="99%">
         <tr>
             <td align="right">解密目录：</td>
-            <td width="80%"><input type="text" name="monitoredPath" style="width: 100%"/></td>
+            <td width="80%"><input type="text" name="monitoredPath" style="width: 100%" v-model="monitoredPath"/></td>
         </tr>
         <tr>
             <td align="right">生成目录：</td>
-            <td><input type="text" name="monitoredDecryptPath" style="width: 100%"/></td>
+            <td><input type="text" name="monitoredDecryptPath" style="width: 100%"  v-model="monitoredDecryptPath"/></td>
         </tr>
         <tr>
             <td colspan="2" align="center">
@@ -33,24 +30,55 @@
         </tr>
     </table>
     <label>日志展示：</label>
-    <div id="showLog" style="border: 1px black solid">
-        <p>这是日志</p>
+    <div id="showLog" style="border: 1px black solid;height: 300px;overflow: auto">
+        <p v-for="logContent in logContentList">{{logContent}}</p>
     </div>
 </div>
 </body>
 </html>
 <script>
+    var webSocket = null;
+    var socketOpen = false;
+
+    if ("WebSocket" in window) {
+        webSocket = new WebSocket(`ws://${window.location.host}/concept-websocket/sample`);
+        webSocket.onopen = function () {
+            console.log("连接成功！");
+            socketOpen = true
+        };
+        webSocket.onmessage = function (evt) {
+            var received_msg = evt.data;
+            console.log("接受消息：" + received_msg);
+            // 追加日志
+            vueApp.logContentList.unshift(`${new Date().toISOString()}:${received_msg}`);
+        };
+        webSocket.onclose = function () {
+            console.log("连接关闭！");
+        };
+        webSocket.onerror = function () {
+            console.log("连接异常！");
+        };
+    }
+
     var vueApp = new Vue({
         el: '#vueApp',
-        data: {},
+        data: {
+            monitoredPath: "/Users/renyong/Downloads/测试/1",
+            monitoredDecryptPath: "/Users/renyong/Downloads/测试/1_解密",
+            logContentList: ['这是日志打印']
+        },
         methods: {
             // 解密
             decrypt: function () {
-                alert(666)
+                var body = {monitoredPath: vueApp.monitoredPath,
+                    monitoredDecryptPath: vueApp.monitoredDecryptPath}
+                if (socketOpen) {
+                    webSocket.send(JSON.stringify(body))
+                }
             },
             // 清理日志
             clearLog: function () {
-
+                vueApp.logContentList = [];
             }
         }
     });

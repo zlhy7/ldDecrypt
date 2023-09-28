@@ -38,13 +38,21 @@ public class WebSocketService {
     public void MessageReceiveEventHanlder(MessageReceiveEvent messageReceiveEvent){
         String body = messageReceiveEvent.getMessage().getPayload().toString();
         log.info("接收到消息:\n{}", body);
+        if(!body.startsWith("{")){
+            // 这里就是心跳消息
+            return;
+        }
         DecryptWebSocketBody decryptWebSocketBody = JSONObject.parseObject(body, DecryptWebSocketBody.class);
         // 心跳就跳过
         if (decryptWebSocketBody.isHeartbeat()) {
             return;
         }
         // 要处理信息就一直打印
-        monitoredFileService.decrypt(decryptWebSocketBody,this);
+        try {
+            monitoredFileService.decrypt(decryptWebSocketBody,this);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
     /**
      * 发送消息

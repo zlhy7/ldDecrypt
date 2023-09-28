@@ -163,7 +163,7 @@ public class MonitoredFileService {
             decryptFile.getParentFile().mkdirs();
         }
         //endregion
-        try (InputStream fis = new FileInputStream(file)){
+        try (InputStream fis = Files.newInputStream(file.toPath())){
             Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
             System.out.printf("解密完毕：%s\n",decryptFile.getAbsolutePath());
         } catch (Exception e) {
@@ -177,38 +177,50 @@ public class MonitoredFileService {
      * @return
      * @author 沙福林 on 2023-09-27 20:10:11
      */
-    public void decrypt(DecryptWebSocketBody decryptWebSocketBody,WebSocketService webSocketService){
+    public void decrypt(DecryptWebSocketBody decryptWebSocketBody,WebSocketService webSocketService) throws Exception {
         // 监控目录
         String monitoredFilePath = decryptWebSocketBody.getMonitoredFilePath();
         // 解密生成目录
         String monitoredDecryptPath = decryptWebSocketBody.getMonitoredDecryptPath();
         // 文件路径分隔符以及末尾符号处理
-        monitoredFilePath = monitoredFilePath.replaceAll("[\\/]+",FILE_SEPARATOR);
+        String regex = "[\\\\|/]+";
+        monitoredFilePath = monitoredFilePath.replaceAll(regex,FILE_SEPARATOR);
         if(!monitoredFilePath.endsWith(FILE_SEPARATOR)){
             monitoredFilePath += FILE_SEPARATOR;
         }
-        monitoredDecryptPath = monitoredDecryptPath.replaceAll("\\+|/+",FILE_SEPARATOR);
+        monitoredDecryptPath = monitoredDecryptPath.replaceAll(regex,FILE_SEPARATOR);
         if(!monitoredDecryptPath.endsWith(FILE_SEPARATOR)){
             monitoredDecryptPath += FILE_SEPARATOR;
         }
-        // 检查以上目录是否存在，不存在则创建，如果monitoredFilePath是文件地址，则解密目录一定是个目录地址
-/*
-        webSocketService.sendPathMsg("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
-        //region 解密目标地址
-        String path2 = file.getAbsolutePath().replace("\\",FILE_SEPARATOR)
-                .replace("//",FILE_SEPARATOR)
-                .replace(monitoredFilePath,"");
-        File decryptFile = new File(monitoredDecryptPath + path2);
-        if (!decryptFile.getParentFile().exists()) {
-            decryptFile.getParentFile().mkdirs();
+        // 监控目录
+        File monitoredFile = new File(monitoredFilePath);
+        File monitoredDecryptFile = new File(monitoredDecryptPath);
+        if (!monitoredDecryptFile.exists()) {
+            // 解密目录不存在就创建
+            monitoredDecryptFile.mkdirs();
         }
-        //endregion
-        try (InputStream fis = new FileInputStream(file)){
-            Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-            System.out.printf("解密完毕：%s\n",decryptFile.getAbsolutePath());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }*/
+        webSocketService.sendPathMsg("开始解密目录：%s",monitoredFile.getAbsolutePath());
+        String finalMonitoredFilePath = monitoredFilePath;
+        String finalMonitoredDecryptPath = monitoredDecryptPath;
+        Files.walk(monitoredFile.toPath()).forEach(path->{
+            webSocketService.sendPathMsg("遍历路径：%s",path);
+
+            /*//region 解密目标地址
+            File file = path.toFile();
+            String decryptFilePath2 = finalMonitoredDecryptPath+ file.getAbsolutePath().replaceAll(regex,FILE_SEPARATOR)
+                    .replace(finalMonitoredFilePath,"");
+            File decryptFile = new File(decryptFilePath2);
+            if (!decryptFile.getParentFile().exists()) {
+                decryptFile.getParentFile().mkdirs();
+            }
+            //endregion
+            try (InputStream fis = Files.newInputStream(file.toPath())){
+                Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+                webSocketService.sendPathMsg("解密完毕：%s",monitoredFile.getAbsolutePath());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }*/
+        });
     }
     public static void main(String[] args) throws Exception {
         // 手动解密
