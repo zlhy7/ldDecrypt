@@ -8,6 +8,9 @@
         #vueApp table *{
             font-size: 40px;
         }
+        #showLog p:hover{
+            background-color: yellow;
+        }
     </style>
 </head>
 <body>
@@ -16,7 +19,7 @@
     <table width="99%">
         <tr>
             <td align="right">解密目录：</td>
-            <td width="80%"><input type="text" name="monitoredPath" style="width: 100%" v-model="monitoredPath"/></td>
+            <td width="80%"><input type="text" name="monitoredFilePath" style="width: 100%" v-model="monitoredFilePath"/></td>
         </tr>
         <tr>
             <td align="right">生成目录：</td>
@@ -63,14 +66,14 @@
     var vueApp = new Vue({
         el: '#vueApp',
         data: {
-            monitoredPath: "/Users/renyong/Downloads/测试/1",
+            monitoredFilePath: "/Users/renyong/Downloads/测试/1",
             monitoredDecryptPath: "/Users/renyong/Downloads/测试/1_解密",
             logContentList: ['这是日志打印']
         },
         methods: {
             // 解密
             decrypt: function () {
-                var body = {monitoredPath: vueApp.monitoredPath,
+                var body = {monitoredFilePath: vueApp.monitoredFilePath,
                     monitoredDecryptPath: vueApp.monitoredDecryptPath}
                 if (socketOpen) {
                     webSocket.send(JSON.stringify(body))

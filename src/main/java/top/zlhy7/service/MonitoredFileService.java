@@ -8,6 +8,7 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
 import top.zlhy7.listener.FileListener;
 import top.zlhy7.model.DecryptWebSocketBody;
 
@@ -202,10 +203,10 @@ public class MonitoredFileService {
         webSocketService.sendPathMsg("开始解密目录：%s",monitoredFile.getAbsolutePath());
         String finalMonitoredFilePath = monitoredFilePath;
         String finalMonitoredDecryptPath = monitoredDecryptPath;
+        StopWatch stopWatch = new StopWatch();
         Files.walk(monitoredFile.toPath()).forEach(path->{
-            webSocketService.sendPathMsg("遍历路径：%s",path);
-
-            /*//region 解密目标地址
+            stopWatch.start("解密文件："+path);
+            //region 解密目标地址
             File file = path.toFile();
             String decryptFilePath2 = finalMonitoredDecryptPath+ file.getAbsolutePath().replaceAll(regex,FILE_SEPARATOR)
                     .replace(finalMonitoredFilePath,"");
@@ -213,13 +214,22 @@ public class MonitoredFileService {
             if (!decryptFile.getParentFile().exists()) {
                 decryptFile.getParentFile().mkdirs();
             }
+            // 自己就是目录则直接创建就可以了
+            if (file.isDirectory()) {
+                decryptFile.mkdirs();
+                webSocketService.sendPathMsg("创建目录：%s",decryptFile.getAbsolutePath());
+                stopWatch.stop();
+                return;
+            }
             //endregion
             try (InputStream fis = Files.newInputStream(file.toPath())){
-                Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-                webSocketService.sendPathMsg("解密完毕：%s",monitoredFile.getAbsolutePath());
+                Files.copy(fis,decryptFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                stopWatch.stop();
+                webSocketService.sendPathMsg("解密完毕：%s,耗时：%d ms",
+                        decryptFile.getAbsolutePath(),stopWatch.getLastTaskTimeMillis());
             } catch (Exception e) {
                 throw new RuntimeException(e);
-            }*/
+            }
         });
     }
     public static void main(String[] args) throws Exception {
