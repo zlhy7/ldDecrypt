@@ -73,6 +73,7 @@
     </dependencies>
 
     <build>
+        <finalName>ldDecrypt</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
