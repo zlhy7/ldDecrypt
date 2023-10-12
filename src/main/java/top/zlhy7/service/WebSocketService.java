@@ -2,6 +2,7 @@ package top.zlhy7.service;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.github.linyuzai.connection.loadbalance.core.extension.PathMessage;
+import com.github.linyuzai.connection.loadbalance.core.extension.UserMessage;
 import com.github.linyuzai.connection.loadbalance.core.message.MessageReceiveEvent;
 import com.github.linyuzai.connection.loadbalance.websocket.EnableWebSocketLoadBalanceConcept;
 import com.github.linyuzai.connection.loadbalance.websocket.concept.WebSocketLoadBalanceConcept;
@@ -10,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import top.zlhy7.model.DecryptWebSocketBody;
+
+import javax.annotation.PostConstruct;
 
 /**
  * @author 沙福林
@@ -30,6 +33,14 @@ public class WebSocketService {
      */
     @Autowired
     private WebSocketLoadBalanceConcept webSocketLoadBalanceConcept;
+
+    /**
+     * 初始化
+     */
+    @PostConstruct
+    public void init(){
+        monitoredFileService.setWebSocketService(this);
+    }
     /**
      * 监听消息接收事件,相当于接收消息以及消息处理
      * @param messageReceiveEvent
@@ -63,5 +74,16 @@ public class WebSocketService {
      */
     public void sendPathMsg(String msgFormat,Object ... objs){
         webSocketLoadBalanceConcept.send(new PathMessage(String.format(msgFormat,objs), "sample"));
+    }
+    /**
+     * 发送消息
+     * @param userId 发给谁，0自定义解密 1配置文件动态监控
+     * @param msgFormat 字符串模板
+     * @param objs 参数
+     * @return
+     * @author 沙福林 on 2023-10-12 15:19:12
+     */
+    public void sendUserMsg(String userId,String msgFormat,Object ... objs){
+        webSocketLoadBalanceConcept.send(new UserMessage(String.format(msgFormat,objs), userId));
     }
 }

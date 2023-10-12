@@ -14,7 +14,6 @@ import top.zlhy7.model.DecryptWebSocketBody;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +21,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
 
+import static top.zlhy7.WebSocketUserIdEnums.CUSTOM_PATH;
+import static top.zlhy7.WebSocketUserIdEnums.LOCAL_MONITOR;
 import static top.zlhy7.constant.Constants.FILE_SEPARATOR;
 
 /**
@@ -51,6 +52,15 @@ public class MonitoredFileService {
      * 解密文件目录 file对象
      */
     public static File monitoredDecryptPathObj;
+    /**
+     * webSocket对象
+     */
+    private WebSocketService webSocketService;
+
+    public void setWebSocketService(WebSocketService webSocketService) {
+        this.webSocketService = webSocketService;
+    }
+
     @PostConstruct
     public void init(){
         log.info("绿盾文件解密监控目录：{}",monitoredFilePath);
@@ -104,22 +114,6 @@ public class MonitoredFileService {
      *
      */
     public void decrypt(File file) throws Exception {
-        System.out.printf("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
-        //region 解密目标地址
-        String path2 = file.getAbsolutePath().replace("\\",FILE_SEPARATOR)
-                .replace("//",FILE_SEPARATOR)
-                .replace(monitoredFilePath,"");
-        File decryptFile = new File(monitoredDecryptPath + path2);
-        if (!decryptFile.getParentFile().exists()) {
-            decryptFile.getParentFile().mkdirs();
-        }
-        //endregion
-        try (InputStream fis = new FileInputStream(file)){
-            Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-                System.out.printf("解密完毕：%s\n",decryptFile.getAbsolutePath());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         decrypt(file,monitoredFilePath,monitoredDecryptPath);
     }
     /**
@@ -154,7 +148,10 @@ public class MonitoredFileService {
      * @author 沙福林 on 2023/9/22 12:10
      */
     public void decrypt(File file,String monitoredFilePath,String monitoredDecryptPath){
+        long s = System.currentTimeMillis();
         System.out.printf("开始解密：%s,原文件大小：%d\n",file.getAbsolutePath(),file.length());
+        webSocketService.sendUserMsg(LOCAL_MONITOR.getUserId(),"开始解密：%s,原文件大小：%d",
+                file.getAbsolutePath(),file.length());
         //region 解密目标地址
         String path2 = file.getAbsolutePath().replace("\\",FILE_SEPARATOR)
                 .replace("//",FILE_SEPARATOR)
@@ -167,6 +164,8 @@ public class MonitoredFileService {
         try (InputStream fis = Files.newInputStream(file.toPath())){
             Files.copy(fis,Paths.get(decryptFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
             System.out.printf("解密完毕：%s\n",decryptFile.getAbsolutePath());
+            s = System.currentTimeMillis() - s;
+            webSocketService.sendUserMsg(LOCAL_MONITOR.getUserId(),"解密完毕：%s,耗时：%d ms",decryptFile.getAbsolutePath(),s);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -200,7 +199,7 @@ public class MonitoredFileService {
             // 解密目录不存在就创建
             monitoredDecryptFile.mkdirs();
         }
-        webSocketService.sendPathMsg("开始解密目录：%s",monitoredFile.getAbsolutePath());
+        webSocketService.sendUserMsg(CUSTOM_PATH.getUserId(),"开始解密目录：%s",monitoredFile.getAbsolutePath());
         String finalMonitoredFilePath = monitoredFilePath;
         String finalMonitoredDecryptPath = monitoredDecryptPath;
         StopWatch stopWatch = new StopWatch();
@@ -217,7 +216,7 @@ public class MonitoredFileService {
             // 自己就是目录则直接创建就可以了
             if (file.isDirectory()) {
                 decryptFile.mkdirs();
-                webSocketService.sendPathMsg("创建目录：%s",decryptFile.getAbsolutePath());
+                webSocketService.sendUserMsg(CUSTOM_PATH.getUserId(),"创建目录：%s",decryptFile.getAbsolutePath());
                 stopWatch.stop();
                 return;
             }
@@ -225,12 +224,14 @@ public class MonitoredFileService {
             try (InputStream fis = Files.newInputStream(file.toPath())){
                 Files.copy(fis,decryptFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 stopWatch.stop();
-                webSocketService.sendPathMsg("解密完毕：%s,耗时：%d ms",
+                webSocketService.sendUserMsg(CUSTOM_PATH.getUserId(),"解密完毕：%s,耗时：%d ms",
                         decryptFile.getAbsolutePath(),stopWatch.getLastTaskTimeMillis());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+        webSocketService.sendUserMsg(CUSTOM_PATH.getUserId(),"解密完毕：%s,共计耗时：%d ms",
+                monitoredFilePath,stopWatch.getTotalTimeMillis());
     }
     public static void main(String[] args) throws Exception {
         // 手动解密

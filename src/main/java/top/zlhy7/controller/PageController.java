@@ -24,4 +24,12 @@ public class PageController {
     public String indexPage(HttpServletRequest request){
         return "index";
     }
+    /**
+     * 通用路由跳转
+     * @return
+     */
+    @GetMapping("/**")
+    public String universalRoutingJump(HttpServletRequest request){
+        return request.getRequestURI().replace("/page/", "");
+    }
 }

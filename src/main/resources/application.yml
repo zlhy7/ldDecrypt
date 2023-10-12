@@ -18,9 +18,9 @@ logging:
   level:
     top.zlhy7: debug
     org.springframework: warn
-# 监控的目录
+# 监控的目录,注意文件夹末尾必须带“/”
 monitoredPath: D:/fileWatch/
-# 解密后目录
+# 解密后目录,注意文件夹末尾必须带“/”
 monitoredDecryptPath: D:/fileWatch_解密/
 # websocket配置
 concept:

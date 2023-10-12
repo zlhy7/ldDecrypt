@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>绿盾解密-本地监控日志打印</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.7.9/vue.min.js"></script>
+    <style>
+        #showLog p:hover{
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+<a href="/page">自定义目录解密</a>
+<div id="vueApp">
+    <label>本地监控日志：</label>
+    <input type="button" value="清空日志内容" @click="clearLog"/>
+    <div id="showLog" style="border: 1px black solid;height: 40em;overflow: auto">
+        <p v-for="logContent in logContentList">{{logContent}}</p>
+    </div>
+</div>
+</body>
+</html>
+<script>
+    var webSocket = null;
+    var socketOpen = false;
+
+    if ("WebSocket" in window) {
+        webSocket = new WebSocket(`ws://${window.location.host}/concept-websocket/user?userId=2`);
+        webSocket.onopen = function () {
+            console.log("连接成功！");
+            socketOpen = true
+        };
+        webSocket.onmessage = function (evt) {
+            var received_msg = evt.data;
+            console.log("接受消息：" + received_msg);
+            // 追加日志
+            vueApp.logContentList.unshift(`${new Date().toISOString()}:${received_msg}`);
+        };
+        webSocket.onclose = function () {
+            console.log("连接关闭！");
+        };
+        webSocket.onerror = function () {
+            console.log("连接异常！");
+        };
+    }
+
+    var vueApp = new Vue({
+        el: '#vueApp',
+        data: {
+            logContentList: ['这是日志打印']
+        },
+        methods: {
+            // 清理日志
+            clearLog: function () {
+                vueApp.logContentList = [];
+            }
+        }
+    });
+</script>
