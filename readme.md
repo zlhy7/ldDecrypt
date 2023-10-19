@@ -1,4 +1,5 @@
 # 绿盾解密
+# [国内地址](https://gitee.com/zlhy7/ldDecrypt)
 ## 成品下载
 [gitee-releases](https://gitee.com/zlhy7/ldDecrypt/releases)
 
